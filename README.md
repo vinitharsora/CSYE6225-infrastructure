@@ -1,16 +1,12 @@
 # infrastructure/aws
 
-#This assignment will focus on setting up our networking resources such as Virtual Private Cloud (VPC), Internet Gateway, Route Tables, and Routes. We will use AWS CloudFormation for infrastructure setup and tear down.
+#This assignment will focus on setting up our networking resources such as Virtual Private Cloud (VPC), Internet Gateway, Route Tables, and Routes from previous assignment and add a application security group and an EC2 instance to deploy our Web Application. We will use AWS CloudFormation for infrastructure setup and tear down.
 
 # Tasks Accomplished:
 
 1. Created a Stack using Amazon CloudFormation
 
 2. Deleted a Stack using Amazon CloudFormation
-
-3. Created multiple VPCs (and resources) without any conflicts in the same AWS account & same region.
-
-4. Created another VPCs (and resources) without any conflicts in different AWS Region.
 
 # What you need:
 
