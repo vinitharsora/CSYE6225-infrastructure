@@ -16,18 +16,13 @@
 
 3. 2 new profiles, not the default one.
 
-# Steps:
+# Useful Commands:
 
-1. To create a Stack, hit the following command in your AWS CLI
+* aws cloudformation deploy --profile dev  --template-file csye6225-infra.yml --capabilities CAPABILITY_NAMED_IAM --parameter-overrides KeyName=testkey AMIImage =ami-09e0000a6d87cbfb1 --stack-name demo1
 
----------------------------------------------------------------------------
-aws cloudformation --profile dev create-stack --stack-name Stack1 --template-body file://csye6225-infra.yml --region us-east-1 --parameters ParameterKey=VpcName,ParameterValue=testVPC1 ParameterKey=VpcCIDR,ParameterValue=10.0.0.0/16 ParameterKey=Subnet1CIDR,ParameterValue=10.0.1.0/24 ParameterKey=Subnet2CIDR,ParameterValue=10.0.2.0/24 ParameterKey=Subnet3CIDR,ParameterValue=10.0.3.0/24
+* pm2 restart all --update-env
 
 
-2. To delete a Stack, hit the following command in your AWS CLI
-
--------------------------------------------------------------------------------
-aws cloudformation --profile dev create-stack --stack-name Stack1 --region us-east-1 
 
 
 
