@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: 2010-09-09
 
-Description: VPC with public subnet
+Description: Assignment-5 that constructs VPC,S3,RDS,EC2,Subnet,IAM.
 
 Parameters:
   VpcCIDR:
@@ -25,7 +25,7 @@ Parameters:
 
   #Private subnet1
   PrivateSubnet1CIDR:
-    Default: 10.0.6.0/24
+    Default: 10.0.3.0/24
     Description: Enter the IP range (CIDR notation) for private subnet 1
     Type: String
 
@@ -60,13 +60,11 @@ Parameters:
     Type: String
     Description: Db name
   
-  AWSAccesskeyid:
-    Default: AKIAR5F3U7FNWRR2BCVS 
+  AWSAccessKeyID:
     Type: String
     Description: access key id
 
-  AWSSECRETACCESSKEY:
-    Default: pEfJ5sfRa+wAK8wAaapQ3NegKEMA3mt0TelVUuDj
+  AWSSecretAccessKey:
     Type: String
     Description: access key secret
 
@@ -88,6 +86,7 @@ Resources:
       Tags:
         - Key: Name
           Value: IGW
+
   InternetGatewayAttach:
     Type: AWS::EC2::VPCGatewayAttachment
     Properties:
@@ -315,7 +314,7 @@ Resources:
     Type: AWS::RDS::DBInstance
     Properties:
       DBName: csye6225
-      MasterUsername: root
+      MasterUsername: csye6225
       MasterUserPassword: Qwerty12345
       Engine: mysql
       EngineVersion: 8.0.28
@@ -392,8 +391,8 @@ Resources:
           #!/bin/bash
           echo export RDS="${MySqlDbInstance.Endpoint.Address}" >> /etc/profile
           echo export DB_HOST="${MySqlDbInstance.Endpoint.Address}" >> /etc/profile
-          echo export DB_USER="root" >> /etc/profile
-          echo export SQL_ROOT="root" >> /etc/profile
+          echo export DB_USER="csye6225" >> /etc/profile
+          echo export SQL_ROOT="csye6225" >> /etc/profile
           echo export SQL_PASS="${DBPassword}" >> /etc/profile
           echo export DB_PASSWORD="${DBPassword}" >> /etc/profile
           echo export DB_NAME="${DBName}" >> /etc/profile
@@ -401,8 +400,8 @@ Resources:
           echo export AWS_BUCKET_NAME="${S3bucket}" >> /etc/profile
           echo export AWS_BUCKET_REGION="us-east-1" >> /etc/profile
           echo export AWS_REGION="us-east-1" >> /etc/profile
-          echo export AWS_ACCESS_KEY_ID="${AWSAccesskeyid}"  >> /etc/profile
-          echo export AWS_SECRET_ACCESS_KEY="${AWSSECRETACCESSKEY}" >> /etc/profile
+          echo export AWS_ACCESS_KEY_ID="${AWSAccessKeyID}"  >> /etc/profile
+          echo export AWS_SECRET_ACCESS_KEY="${AWSSecretAccessKey}" >> /etc/profile
           echo export DB="csye6225" >> /etc/profile
           echo export region="us-east-1" >> /etc/profile
           sleep 20
