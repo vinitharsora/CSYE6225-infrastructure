@@ -1,6 +1,6 @@
 # infrastructure/aws
 
-#This assignment will focus on setting up our networking resources such as Virtual Private Cloud (VPC), Internet Gateway, Route Tables, Routes, application security group an EC2 instance from previous assignment and now creating S3 bucket, RDS instance, IAM policies to deploy our Web Application. We will use AWS CloudFormation for infrastructure setup and tear down.
+#This assignment will focus on setting up our networking resources such as Virtual Private Cloud (VPC), Internet Gateway, Route Tables, Routes, application security group an EC2 instance, creating S3 bucket, RDS instance, IAM policies to deploy our Web Application from previous assignment and now use Load Balancing, Auto Scaling and JMeter to build our infrastructure. We will use AWS CloudFormation for infrastructure setup and tear down.
 
 # Tasks Accomplished:
 
@@ -14,11 +14,9 @@
 
 2. IDE
 
-3. 2 new profiles, not the default one.
-
 # Useful Commands:
 
-* aws cloudformation deploy --profile dev  --template-file csye6225-infra.yml --capabilities CAPABILITY_NAMED_IAM --parameter-overrides KeyName=testkey AMIImage =ami-09e0000a6d87cbfb1 --stack-name demo1
+* aws cloudformation deploy --profile demo --template-file csye6225-infra.yml --capabilities CAPABILITY_NAMED_IAM --parameter-overrides KeyName=testkey AmiID=ami-01300e13abca0950e --stack-name Assignment6
 
 * pm2 restart all --update-env
 
