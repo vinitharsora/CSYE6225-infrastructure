@@ -540,9 +540,9 @@ Resources:
   AutoscalingGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
     Properties:
-      MinSize: '3'
+      MinSize: '1'
       MaxSize: '5'
-      DesiredCapacity: '3'
+      DesiredCapacity: '1'
       LaunchConfigurationName: !Ref asglaunchconfig
       VPCZoneIdentifier:
       - !Ref PublicSubnet1
@@ -575,8 +575,8 @@ Resources:
     Properties:
       EvaluationPeriods: '1'
       Statistic: Average
-      Threshold: '13'
-      AlarmDescription: Scale up if CPU > 13%
+      Threshold: '11'
+      AlarmDescription: Scale up if CPU > 11%
       Period: '60'
       AlarmActions:
       - !Ref ScaleOutPolicy
@@ -592,8 +592,8 @@ Resources:
     Properties:
       EvaluationPeriods: '1'
       Statistic: Average
-      Threshold: '11'
-      AlarmDescription: Scale down if CPU < 11%
+      Threshold: '9'
+      AlarmDescription: Scale down if CPU < 9%
       Period: '60'
       AlarmActions:
       - !Ref ScaleInPolicy
@@ -657,6 +657,5 @@ Resources:
         AliasTarget:
           HostedZoneId: !GetAtt 'LoadBalancer.CanonicalHostedZoneID'
           DNSName: !GetAtt 'LoadBalancer.DNSName'
-
 
 
