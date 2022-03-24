@@ -56,6 +56,11 @@ Parameters:
     Type: String
     Default: "database"
 
+  LBSecurityGroup:
+    Description: "Name Tag for LB Security Group"
+    Type: String
+    Default: "load balancer"
+
   AmiID:
     Description: "AMI ID for Instance"
     Type: String
@@ -348,6 +353,9 @@ Resources:
           ToPort: 443
           CidrIp:
             Ref: Ipv4Cidr
+        Tags:
+        - Key: Name
+          Value: !Ref LBSecurityGroup
 
   DBSecurityGroup:
     DependsOn:
@@ -476,6 +484,7 @@ Resources:
             Action:
               - 'sts:AssumeRole'
       Path: /
+
   IAMInstanceProfile: 
     Type: 'AWS::IAM::InstanceProfile'
     Properties: 
@@ -648,3 +657,6 @@ Resources:
         AliasTarget:
           HostedZoneId: !GetAtt 'LoadBalancer.CanonicalHostedZoneID'
           DNSName: !GetAtt 'LoadBalancer.DNSName'
+
+
+
