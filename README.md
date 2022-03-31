@@ -16,7 +16,7 @@
 
 # Useful Commands:
 
-* aws cloudformation deploy --profile demo --template-file csye6225-infra.yml --capabilities CAPABILITY_NAMED_IAM --parameter-overrides KeyName=testkey AmiID=ami-01300e13abca0950e --stack-name Assignment7
+* aws cloudformation deploy --profile demo --template-file csye6225-infra.yml --capabilities CAPABILITY_NAMED_IAM --parameter-overrides KeyName=testkey AmiID=ami-01300e13abca0950e --stack-name assignment7
 
 * pm2 restart all --update-env
 
