@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: "Assignment-6: Load Balancing, Auto Scaling and JMeter."
+Description: "Assignment-7: Cloudformation Stack Template"
 Parameters:
   VpcCidrBlock:
     Description: "CIDR Block for VPC"
@@ -9,7 +9,7 @@ Parameters:
   VpcSubnetCidrBlocks: 
     Description: "List of CIDR blocks"
     Type: CommaDelimitedList
-    Default: "10.0.10.0/24, 10.0.11.0/24, 10.0.12.0/24, 10.0.13.0/24, 10.0.14.0/24, 10.0.15.0/24"
+    Default: "10.0.1.0/24, 10.0.2.0/24, 10.0.3.0/24, 10.0.4.0/24, 10.0.5.0/24, 10.0.6.0/24"
 
   VpcSubnetAvailabilityZones: 
     Description: "List of Availability Zones"
@@ -311,7 +311,7 @@ Resources:
   ApplicationSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-        GroupDescription: Application Security Group
+        GroupDescription: application security group
         GroupName: application
         VpcId:
           Ref: VPC
@@ -326,11 +326,6 @@ Resources:
           ToPort: 22
           CidrIp: 
             Ref: Ipv4Cidr
-        - IpProtocol: tcp
-          FromPort: 3306
-          ToPort: 3306
-          CidrIp:
-            Ref: Ipv4Cidr
         Tags:
         - Key: Name
           Value: !Ref AppSecurityGroup
@@ -338,7 +333,7 @@ Resources:
   LoadBalancerSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-        GroupDescription: Load Balancer security group
+        GroupDescription: load balancer security group
         GroupName: load balancer
         VpcId:
           Ref: VPC
@@ -484,7 +479,6 @@ Resources:
             Action:
               - 'sts:AssumeRole'
       Path: /
-
   IAMInstanceProfile: 
     Type: 'AWS::IAM::InstanceProfile'
     Properties: 
@@ -492,7 +486,7 @@ Resources:
       Roles: 
         - Ref: IAMRole
 
-  asglaunchconfig:
+  LaunchConfig:
     Type: AWS::AutoScaling::LaunchConfiguration
     Properties:
       ImageId: !Ref AmiID
@@ -543,7 +537,7 @@ Resources:
       MinSize: '1'
       MaxSize: '5'
       DesiredCapacity: '1'
-      LaunchConfigurationName: !Ref asglaunchconfig
+      LaunchConfigurationName: !Ref LaunchConfig
       VPCZoneIdentifier:
       - !Ref PublicSubnet1
       - !Ref PublicSubnet2
@@ -557,6 +551,7 @@ Resources:
           PropagateAtLaunch: "true"
 
   LoadBalancer:
+    DependsOn: InternetGatewayAttachment
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
       IpAddressType: ipv4
@@ -576,8 +571,8 @@ Resources:
       EvaluationPeriods: '1'
       Statistic: Average
       Threshold: '11'
-      AlarmDescription: Scale up if CPU > 11%
-      Period: '60'
+      AlarmDescription: Alarm if CPU utilization more than 11%
+      Period: '300'
       AlarmActions:
       - !Ref ScaleOutPolicy
       Namespace: AWS/EC2
@@ -593,8 +588,8 @@ Resources:
       EvaluationPeriods: '1'
       Statistic: Average
       Threshold: '9'
-      AlarmDescription: Scale down if CPU < 9%
-      Period: '60'
+      AlarmDescription: Alarm if CPU utilization is less than 9%
+      Period: '300'
       AlarmActions:
       - !Ref ScaleInPolicy
       Namespace: AWS/EC2
@@ -645,7 +640,7 @@ Resources:
       LoadBalancerArn: !Ref LoadBalancer
       Port: 80
       Protocol: HTTP
-      
+
   DNSRecord:
     Type: AWS::Route53::RecordSetGroup
     Properties:
@@ -658,4 +653,156 @@ Resources:
           HostedZoneId: !GetAtt 'LoadBalancer.CanonicalHostedZoneID'
           DNSName: !GetAtt 'LoadBalancer.DNSName'
 
+  CodeDeployEC2S3:
+    Type: 'AWS::IAM::Policy'
+    Properties:
+      PolicyName: CodeDeploy-EC2-S3
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+        - Effect: Allow
+          Action:
+            - 's3:GetObject'
+            - 's3:ListObject'
+          Resource:
+              - arn:aws:s3:::codedeploy.demo.vinitharsora.me
+              - arn:aws:s3:::codedeploy.demo.vinitharsora.me/*
+      Roles:
+        - !Ref IAMRole
 
+  GHUploadToS3:
+    Type: 'AWS::IAM::Policy'
+    Properties:
+      PolicyName: GH-Upload-To-S3
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+        - Effect: Allow
+          Action:
+            - 's3:GetObject'
+            - 's3:ListObject'
+            - 's3:PutObject'
+          Resource:
+              - arn:aws:s3:::codedeploy.demo.vinitharsora.me
+              - arn:aws:s3:::codedeploy.demo.vinitharsora.me/*
+      Users: 
+        - ghactions-app
+
+  GHCodeDeploy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: GHCodeDeploy
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action:
+              - 'codedeploy:RegisterApplicationRevision'
+              - 'codedeploy:GetApplicationRevision'
+            Resource: 
+              - !Join ["",["arn:aws:codedeploy:us-east-1:",!Ref "AWS::AccountId", ":application:",!Ref CodeDeployApplication,],]
+          - Effect: Allow
+            Action:
+              - 'codedeploy:CreateDeployment'
+              - 'codedeploy:GetDeployment'
+            Resource:
+              - '*'
+          - Effect: Allow
+            Action:
+              - 'codedeploy:GetDeploymentConfig'
+            Resource:
+              - !Join ["",["arn:aws:codedeploy:us-east-1:",!Ref "AWS::AccountId", ":deploymentconfig:CodeDeployDefault.OneAtATime",],]
+              - !Join ["",["arn:aws:codedeploy:us-east-1:",!Ref "AWS::AccountId", ":deploymentconfig:CodeDeployDefault.HalfAtATime",],]
+              - !Join ["",["arn:aws:codedeploy:us-east-1:",!Ref "AWS::AccountId", ":deploymentconfig:CodeDeployDefault.AllAtOnce",],]
+      Users:
+        - ghactions-app
+
+  GHEC2AMI:
+    Type: 'AWS::IAM::Policy'
+    Properties:
+      PolicyName: gh-ec2-ami
+      PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+          - Effect: Allow
+            Action:
+              - ec2:AttachVolume
+              - ec2:AuthorizeSecurityGroupIngress
+              - ec2:CopyImage
+              - ec2:CreateImage
+              - ec2:CreateKeypair
+              - ec2:CreateSecurityGroup
+              - ec2:CreateSnapshot
+              - ec2:CreateTags
+              - ec2:CreateVolume
+              - ec2:DeleteKeyPair
+              - ec2:DeleteSecurityGroup
+              - ec2:DeleteSnapshot
+              - ec2:DeleteVolume
+              - ec2:DeregisterImage
+              - ec2:DescribeImageAttribute
+              - ec2:DescribeImages
+              - ec2:DescribeInstances
+              - ec2:DescribeInstanceStatus
+              - ec2:DescribeRegions
+              - ec2:DescribeSecurityGroups
+              - ec2:DescribeSnapshots
+              - ec2:DescribeSubnets
+              - ec2:DescribeTags
+              - ec2:DescribeVolumes
+              - ec2:DetachVolume
+              - ec2:GetPasswordData
+              - ec2:ModifyImageAttribute
+              - ec2:ModifyInstanceAttribute
+              - ec2:ModifySnapshotAttribute
+              - ec2:RegisterImage
+              - ec2:RunInstances
+              - ec2:StopInstances
+              - ec2:TerminateInstances
+            Resource:
+              - '*'      
+      Users:
+          - ghactions-app
+
+  CodeDeployServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: CodeDeployServiceRole
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - codedeploy.amazonaws.com
+            Action: 
+              - 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSCodeDeployRole
+      Path: "/"
+
+  CodeDeployApplication:
+    Type: AWS::CodeDeploy::Application
+    Properties:
+      ComputePlatform: Server
+      ApplicationName: csye6225webapp
+      
+  CodeDeployDeploymentGroup:
+    Type: AWS::CodeDeploy::DeploymentGroup
+    DependsOn: CodeDeployApplication 
+    Properties:
+      DeploymentGroupName: csye6225-webapp-deployment
+      ApplicationName: !Ref CodeDeployApplication
+      ServiceRoleArn: !GetAtt CodeDeployServiceRole.Arn
+      DeploymentStyle:
+        DeploymentType: IN_PLACE
+        DeploymentOption: WITHOUT_TRAFFIC_CONTROL
+      DeploymentConfigName: CodeDeployDefault.AllAtOnce
+      AutoRollbackConfiguration:
+        Enabled: 'true'
+        Events: 
+          - DEPLOYMENT_FAILURE
+      Ec2TagFilters:
+        - Key: Name
+          Value: CSYE6225-CloudApplication-ASG
+          Type: KEY_AND_VALUE
