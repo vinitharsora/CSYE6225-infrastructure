@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: "Assignment-7: Cloudformation Stack Template"
+Description: "Assignment 7 & 8: Cloudformation Stack Template"
 Parameters:
   VpcCidrBlock:
     Description: "CIDR Block for VPC"
@@ -479,6 +479,7 @@ Resources:
             Action:
               - 'sts:AssumeRole'
       Path: /
+      
   IAMInstanceProfile: 
     Type: 'AWS::IAM::InstanceProfile'
     Properties: 
