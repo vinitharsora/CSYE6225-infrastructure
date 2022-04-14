@@ -925,14 +925,14 @@ Resources:
     Properties:
       AttributeDefinitions:
         - 
-          AttributeName: "email"
+          AttributeName: "Email"
           AttributeType: "S"
         - 
           AttributeName: "TokenName"
           AttributeType: "S"
       KeySchema:
         - 
-          AttributeName: "email"
+          AttributeName: "Email"
           KeyType: "HASH"
         - 
           AttributeName: "TokenName"
@@ -940,7 +940,7 @@ Resources:
       ProvisionedThroughput: 
         ReadCapacityUnits: 10
         WriteCapacityUnits: 5
-      TableName: csye6225
+      TableName: csye-6225
       TimeToLiveSpecification:
         AttributeName: TimeToLive
         Enabled: true
