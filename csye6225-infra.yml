@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: "Assignment 7 & 8: Cloudformation Stack Template"
+Description: "Assignment 9: Cloudformation Stack Template"
 Parameters:
   VpcCidrBlock:
     Description: "CIDR Block for VPC"
@@ -900,6 +900,7 @@ Resources:
   LambdaFunction:
     Type: AWS::Lambda::Function
     Properties:
+      FunctionName: emailVerify
       Role:
         Fn::Join:
         - ''
