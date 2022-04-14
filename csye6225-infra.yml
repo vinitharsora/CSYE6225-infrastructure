@@ -925,16 +925,22 @@ Resources:
     Properties:
       AttributeDefinitions:
         - 
+          AttributeName: "email"
+          AttributeType: "S"
+        - 
           AttributeName: "TokenName"
           AttributeType: "S"
       KeySchema:
         - 
-          AttributeName: "TokenName"
+          AttributeName: "email"
           KeyType: "HASH"
+        - 
+          AttributeName: "TokenName"
+          KeyType: "RANGE"
       ProvisionedThroughput: 
         ReadCapacityUnits: 10
         WriteCapacityUnits: 5
-      TableName: csye-6225
+      TableName: csye6225
       TimeToLiveSpecification:
         AttributeName: TimeToLive
         Enabled: true
