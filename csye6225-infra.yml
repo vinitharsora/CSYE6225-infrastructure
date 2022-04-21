@@ -106,6 +106,11 @@ Parameters:
     Type: String
     Default: "harsora.v@northeastern.edu"
 
+  CertificateARN:
+    Description: The ARN for the first certificate
+    Type: String
+    Default: arn:aws:acm:us-east-1:981331903688:certificate/df006da1-5557-43da-8129-71b9ffdf1720
+
 Resources:
   VPC:
     Type: AWS::EC2::VPC
@@ -492,24 +497,75 @@ Resources:
       Roles: 
         - Ref: IAMRole
 
-  LaunchConfig:
-    Type: AWS::AutoScaling::LaunchConfiguration
+  # LaunchConfig:
+  #   Type: AWS::AutoScaling::LaunchConfiguration
+  #   Properties:
+  #     ImageId: !Ref AmiID
+  #     IamInstanceProfile: !Ref IAMInstanceProfile
+  #     InstanceType: !Ref InstanceType
+  #     KeyName: !Ref KeyName
+  #     BlockDeviceMappings: 
+  #     - DeviceName: "/dev/sdm"
+  #       Ebs: 
+  #         VolumeType: "gp2"
+  #         DeleteOnTermination: "true"
+  #         VolumeSize: "20"
+  #     AssociatePublicIpAddress: "true"
+  #     SecurityGroups:
+  #     - !Ref ApplicationSecurityGroup
+  #     UserData: 
+  #       Fn::Base64: 
+  #           !Sub |
+  #             #!/bin/bash
+  #             echo export DB_HOST="${RDS.Endpoint.Address}" >> /etc/environment
+  #             echo export DB_USER="csye6225" >> /etc/environment
+  #             echo export DB_PASSWORD="csye6225Spring2022" >> /etc/environment
+  #             echo export DB_NAME="csye6225" >> /etc/environment
+  #             echo export AWS_BUCKET_NAME="${S3Bucket}" >> /etc/environment
+  #             echo export AWS_REGION="us-east-1" >> /etc/environment
+  #             echo export DB="csye6225" >> /etc/environment
+  #             sleep 20
+  #             source /etc/environment
+  #             rm -rf node_modules
+  #             sudo npm i
+  #             sudo pm2 restart all --update-env
+  #     LaunchConfigurationName: !Join
+  #       - "."
+  #       - - !Select
+  #           - 0
+  #           - !Split
+  #             - "-"
+  #             - !Select
+  #               - 2
+  #               - !Split
+  #                 - "/"
+  #                 - !Ref "AWS::StackId"
+  #         - "asg_launch_config"
+
+  LaunchTemplate:
+    Type: AWS::EC2::LaunchTemplate
     Properties:
-      ImageId: !Ref AmiID
-      IamInstanceProfile: !Ref IAMInstanceProfile
-      InstanceType: !Ref InstanceType
-      KeyName: !Ref KeyName
-      BlockDeviceMappings: 
-      - DeviceName: "/dev/sdm"
-        Ebs: 
-          VolumeType: "gp2"
-          DeleteOnTermination: "true"
-          VolumeSize: "20"
-      AssociatePublicIpAddress: "true"
-      SecurityGroups:
-      - !Ref ApplicationSecurityGroup
-      UserData: 
-        Fn::Base64: 
+      LaunchTemplateName: LaunchTemplate
+      LaunchTemplateData:
+        IamInstanceProfile:
+          Arn: !GetAtt
+            - IAMInstanceProfile
+            - Arn
+        ImageId: !Ref AmiID
+        InstanceType: !Ref InstanceType
+        KeyName: !Ref KeyName
+        SecurityGroupIds:
+          - !Ref ApplicationSecurityGroup
+        BlockDeviceMappings:
+          - DeviceName: "/dev/sdm"
+            Ebs:
+              VolumeSize: 20
+              VolumeType: "gp2"
+              DeleteOnTermination: true
+              Encrypted: true
+              KmsKeyId: !GetAtt EBSKmsKey.Arn
+        UserData: 
+          Fn::Base64: 
             !Sub |
               #!/bin/bash
               echo export DB_HOST="${RDS.Endpoint.Address}" >> /etc/environment
@@ -524,18 +580,6 @@ Resources:
               rm -rf node_modules
               sudo npm i
               sudo pm2 restart all --update-env
-      LaunchConfigurationName: !Join
-        - "."
-        - - !Select
-            - 0
-            - !Split
-              - "-"
-              - !Select
-                - 2
-                - !Split
-                  - "/"
-                  - !Ref "AWS::StackId"
-          - "asg_launch_config"
 
   AutoscalingGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
@@ -543,7 +587,9 @@ Resources:
       MinSize: '1'
       MaxSize: '5'
       DesiredCapacity: '1'
-      LaunchConfigurationName: !Ref LaunchConfig
+      LaunchTemplate:
+        LaunchTemplateId: !Ref LaunchTemplate
+        Version: !GetAtt LaunchTemplate.LatestVersionNumber
       VPCZoneIdentifier:
       - !Ref PublicSubnet1
       - !Ref PublicSubnet2
@@ -644,8 +690,11 @@ Resources:
         - Type: forward
           TargetGroupArn: !Ref TargetGroup
       LoadBalancerArn: !Ref LoadBalancer
-      Port: 80
-      Protocol: HTTP
+      Port: 443
+      Protocol: HTTPS
+      Certificates:
+        - CertificateArn:
+            Ref: CertificateARN
 
   DNSRecord:
     Type: AWS::Route53::RecordSetGroup
@@ -999,3 +1048,69 @@ Resources:
               - !GetAtt DynamodbTable.Arn
       Roles:
         - !Ref IAMRole
+
+  EBSKmsKey:
+    Type: AWS::KMS::Key
+    Properties:
+      Description: 'KMS Key for EBS'
+      KeyPolicy:
+        Version: "2012-10-17"
+        Id: "kms-key-for-ebs"
+        Statement:
+          - Sid: "KEY"
+            Effect: Allow
+            Principal:
+              AWS: !Join
+                - ''
+                - - 'arn:aws:iam::'
+                  - !Ref 'AWS::AccountId'
+                  - ':root'
+            Action:
+              - "kms:*"
+            Resource: "*"
+          - Sid: "Add Role"
+            Effect: Allow
+            Principal:
+              AWS: !Join
+                - ''
+                - - 'arn:aws:iam::'
+                  - !Ref 'AWS::AccountId'
+                  - ':role/aws-service-role/autoscaling.amazonaws.com/AWSServiceRoleForAutoScaling'
+            Action:
+              - "kms:*"
+            Resource: "*"
+            Condition:
+              Bool:
+                kms:GrantIsForAWSResource: true
+                
+  RdsKmsKey:
+    Type: AWS::KMS::Key
+    Properties:
+      Description: 'KMS Key for RDS'
+      KeyPolicy:
+        Version: "2012-10-17"
+        Id: "kms-key-for-rds"
+        Statement:
+          - Sid: "Key for RDS Instance"
+            Effect: Allow
+            Principal:
+              AWS: !Join
+                - ''
+                - - 'arn:aws:iam::'
+                  - !Ref 'AWS::AccountId'
+                  - ':root'
+            Action:
+              - "kms:*"
+            Resource: "*"
+          - Sid: "Add role"
+            Effect: Allow
+            Principal:
+              AWS: !Join
+                - ''
+                - - 'arn:aws:iam::'
+                  - !Ref 'AWS::AccountId'
+                  - ':role/aws-service-role/rds.amazonaws.com/AWSServiceRoleForRDS'
+            Action:
+              - "kms:*"
+            Resource: "*"
+
