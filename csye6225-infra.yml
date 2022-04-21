@@ -499,51 +499,6 @@ Resources:
       Roles: 
         - Ref: IAMRole
 
-  # LaunchConfig:
-  #   Type: AWS::AutoScaling::LaunchConfiguration
-  #   Properties:
-  #     ImageId: !Ref AmiID
-  #     IamInstanceProfile: !Ref IAMInstanceProfile
-  #     InstanceType: !Ref InstanceType
-  #     KeyName: !Ref KeyName
-  #     BlockDeviceMappings: 
-  #     - DeviceName: "/dev/sdm"
-  #       Ebs: 
-  #         VolumeType: "gp2"
-  #         DeleteOnTermination: "true"
-  #         VolumeSize: "20"
-  #     AssociatePublicIpAddress: "true"
-  #     SecurityGroups:
-  #     - !Ref ApplicationSecurityGroup
-  #     UserData: 
-  #       Fn::Base64: 
-  #           !Sub |
-  #             #!/bin/bash
-  #             echo export DB_HOST="${RDS.Endpoint.Address}" >> /etc/environment
-  #             echo export DB_USER="csye6225" >> /etc/environment
-  #             echo export DB_PASSWORD="csye6225Spring2022" >> /etc/environment
-  #             echo export DB_NAME="csye6225" >> /etc/environment
-  #             echo export AWS_BUCKET_NAME="${S3Bucket}" >> /etc/environment
-  #             echo export AWS_REGION="us-east-1" >> /etc/environment
-  #             echo export DB="csye6225" >> /etc/environment
-  #             sleep 20
-  #             source /etc/environment
-  #             rm -rf node_modules
-  #             sudo npm i
-  #             sudo pm2 restart all --update-env
-  #     LaunchConfigurationName: !Join
-  #       - "."
-  #       - - !Select
-  #           - 0
-  #           - !Split
-  #             - "-"
-  #             - !Select
-  #               - 2
-  #               - !Split
-  #                 - "/"
-  #                 - !Ref "AWS::StackId"
-  #         - "asg_launch_config"
-
   LaunchTemplate:
     Type: AWS::EC2::LaunchTemplate
     Properties:
@@ -1110,9 +1065,6 @@ Resources:
               - kms:ListGrants
               - kms:RevokeGrant
             Resource: '*'
-            Condition:
-              Bool:
-                kms:GrantIsForAWSResource: 'true'
 
   EBSKeyAlias:
     Type: AWS::KMS::Alias
@@ -1191,9 +1143,6 @@ Resources:
               - kms:ListGrants
               - kms:RevokeGrant
             Resource: '*'
-            Condition:
-              Bool:
-                kms:GrantIsForAWSResource: 'true'
 
   RDSKeyAlias:
     Type: AWS::KMS::Alias
