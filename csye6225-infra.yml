@@ -457,6 +457,8 @@ Resources:
         Ref: DBSubnetGroup
       DBParameterGroupName:
         Ref: RDSDBParameterGroup
+      StorageEncrypted: true
+      KmsKeyId: !GetAtt RdsKmsKey.Arn
 
   WebAppS3Policy:
     Type: 'AWS::IAM::Policy'
@@ -1054,44 +1056,80 @@ Resources:
     Properties:
       Description: 'KMS Key for EBS'
       KeyPolicy:
-        Version: "2012-10-17"
         Id: "kms-key-for-ebs"
+        Version: '2012-10-17'
         Statement:
-          - Sid: "KEY"
+          - Sid: Enable IAM User Permissions
             Effect: Allow
             Principal:
-              AWS: !Join
-                - ''
-                - - 'arn:aws:iam::'
-                  - !Ref 'AWS::AccountId'
-                  - ':root'
-            Action:
-              - "kms:*"
-            Resource: "*"
-          - Sid: "Add Role"
+              AWS: 
+                - !Join ["",["arn:aws:iam::",!Ref "AWS::AccountId",":root"],]
+                - !Join ["",["arn:aws:iam::",!Ref "AWS::AccountId",":role/aws-service-role/autoscaling.amazonaws.com/AWSServiceRoleForAutoScaling",],]
+            Action: kms:*
+            Resource: '*'
+          - Sid: Allow access for Key Administrators
             Effect: Allow
             Principal:
-              AWS: !Join
-                - ''
-                - - 'arn:aws:iam::'
-                  - !Ref 'AWS::AccountId'
-                  - ':role/aws-service-role/autoscaling.amazonaws.com/AWSServiceRoleForAutoScaling'
+              AWS: 
+                - !Join ["",["arn:aws:iam::",!Ref "AWS::AccountId",":role/aws-service-role/autoscaling.amazonaws.com/AWSServiceRoleForAutoScaling",],]
             Action:
-              - "kms:*"
-            Resource: "*"
+              - kms:Create*
+              - kms:Describe*
+              - kms:Enable*
+              - kms:List*
+              - kms:Put*
+              - kms:Update*
+              - kms:Revoke*
+              - kms:Disable*
+              - kms:Get*
+              - kms:Delete*
+              - kms:TagResource
+              - kms:UntagResource
+              - kms:ScheduleKeyDeletion
+              - kms:CancelKeyDeletion
+            Resource: '*'
+          - Sid: Allow use of the key
+            Effect: Allow
+            Principal:
+              AWS: 
+                - !Join ["",["arn:aws:iam::",!Ref "AWS::AccountId",":role/aws-service-role/autoscaling.amazonaws.com/AWSServiceRoleForAutoScaling",],]
+            Action:
+              - kms:Encrypt
+              - kms:Decrypt
+              - kms:ReEncrypt*
+              - kms:GenerateDataKey*
+              - kms:DescribeKey
+            Resource: '*'
+          - Sid: Allow attachment of persistent resources
+            Effect: Allow
+            Principal:
+              AWS: 
+                - !Join ["",["arn:aws:iam::",!Ref "AWS::AccountId",":role/aws-service-role/autoscaling.amazonaws.com/AWSServiceRoleForAutoScaling",],]
+            Action:
+              - kms:CreateGrant
+              - kms:ListGrants
+              - kms:RevokeGrant
+            Resource: '*'
             Condition:
               Bool:
-                kms:GrantIsForAWSResource: true
-                
+                kms:GrantIsForAWSResource: 'true'
+
+  EBSKeyAlias:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: alias/ebsKey
+      TargetKeyId:
+        Ref: EBSKmsKey
+
   RdsKmsKey:
     Type: AWS::KMS::Key
     Properties:
       Description: 'KMS Key for RDS'
       KeyPolicy:
-        Version: "2012-10-17"
         Id: "kms-key-for-rds"
+        Version: '2012-10-17'
         Statement:
-          - Sid: "Key for RDS Instance"
+          - Sid: Enable IAM User Permissions
             Effect: Allow
             Principal:
               AWS: !Join
@@ -1099,10 +1137,9 @@ Resources:
                 - - 'arn:aws:iam::'
                   - !Ref 'AWS::AccountId'
                   - ':root'
-            Action:
-              - "kms:*"
-            Resource: "*"
-          - Sid: "Add role"
+            Action: kms:*
+            Resource: '*'
+          - Sid: Allow access for Key Administrators
             Effect: Allow
             Principal:
               AWS: !Join
@@ -1111,6 +1148,56 @@ Resources:
                   - !Ref 'AWS::AccountId'
                   - ':role/aws-service-role/rds.amazonaws.com/AWSServiceRoleForRDS'
             Action:
-              - "kms:*"
-            Resource: "*"
+              - kms:Create*
+              - kms:Describe*
+              - kms:Enable*
+              - kms:List*
+              - kms:Put*
+              - kms:Update*
+              - kms:Revoke*
+              - kms:Disable*
+              - kms:Get*
+              - kms:Delete*
+              - kms:TagResource
+              - kms:UntagResource
+              - kms:ScheduleKeyDeletion
+              - kms:CancelKeyDeletion
+            Resource: '*'
+          - Sid: Allow use of the key
+            Effect: Allow
+            Principal:
+              AWS: !Join
+                - ''
+                - - 'arn:aws:iam::'
+                  - !Ref 'AWS::AccountId'
+                  - ':role/aws-service-role/rds.amazonaws.com/AWSServiceRoleForRDS'
+            Action:
+              - kms:Encrypt
+              - kms:Decrypt
+              - kms:ReEncrypt*
+              - kms:GenerateDataKey*
+              - kms:DescribeKey
+            Resource: '*'
+          - Sid: Allow attachment of persistent resources
+            Effect: Allow
+            Principal:
+              AWS: !Join
+                - ''
+                - - 'arn:aws:iam::'
+                  - !Ref 'AWS::AccountId'
+                  - ':role/aws-service-role/rds.amazonaws.com/AWSServiceRoleForRDS'
+            Action:
+              - kms:CreateGrant
+              - kms:ListGrants
+              - kms:RevokeGrant
+            Resource: '*'
+            Condition:
+              Bool:
+                kms:GrantIsForAWSResource: 'true'
 
+  RDSKeyAlias:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: alias/rdsKey
+      TargetKeyId:
+        Ref: RdsKmsKey
