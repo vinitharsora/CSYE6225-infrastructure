@@ -1,6 +1,6 @@
 # infrastructure/aws
 
-#This assignment will focus on setting up our networking resources such as Virtual Private Cloud (VPC), Internet Gateway, Route Tables, Routes, application security group an EC2 instance, creating S3 bucket, RDS instance, IAM policies, Load Balancing, Auto Scaling, JMeter and CI/CD, CodeDeploy to build our infrastructure. We will use AWS CloudFormation for infrastructure setup and tear down.
+#This assignment will focus on setting up our networking resources such as Virtual Private Cloud (VPC), Internet Gateway, Route Tables, Routes, application security group an EC2 instance, creating S3 bucket, RDS instance, IAM policies, Load Balancing, Auto Scaling, JMeter and CI/CD, CodeDeploy, Logging and Metrics, Lambda function and SSL to build our infrastructure. We will use AWS CloudFormation for infrastructure setup and tear down.
 
 # Tasks Accomplished:
 
@@ -20,7 +20,6 @@
 
 * pm2 restart all --update-env
 
-
-
-
-
+* $ aws acm import-certificate --certificate fileb://Certificate.pem \
+      --certificate-chain fileb://CertificateChain.pem \
+      --private-key fileb://PrivateKey.pem 	
