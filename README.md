@@ -20,6 +20,6 @@
 
 * pm2 restart all --update-env
 
-* $ aws acm import-certificate --certificate fileb://Certificate.pem \
+* aws acm import-certificate --certificate fileb://Certificate.pem \
       --certificate-chain fileb://CertificateChain.pem \
       --private-key fileb://PrivateKey.pem 	
