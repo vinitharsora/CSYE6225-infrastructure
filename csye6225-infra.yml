@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: "Assignment 9 - Cloudformation Stack Template"
+Description: "Cloudformation Stack Template"
 Parameters:
   VpcCidrBlock:
     Description: "CIDR Block for VPC"
